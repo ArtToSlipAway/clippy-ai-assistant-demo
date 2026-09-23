@@ -1,0 +1,226 @@
+# Clippy Assistant
+
+> **Portfolio / sanitized version**
+>
+> This repository is a sanitized public snapshot of a private production project.
+> Production credentials, personal data, private integrations, runtime databases,
+> server configuration and historical Git data are intentionally excluded.
+
+
+### Python · aiogram · OpenAI · Google Calendar · Google Tasks · SQLite
+
+Персональный Telegram AI-ассистент для планирования, задач и автоматизации.
+
+Это обезличенная публичная версия рабочего проекта, который продолжает
+развиваться. Credentials, OAuth-токены, пользовательские данные, runtime-базы,
+логи и приватный production system prompt в репозиторий не входят.
+
+## Задача проекта
+
+Clippy — не просто Telegram-обёртка над LLM. Ассистент объединяет:
+
+- диалог через Telegram;
+- OpenAI API и tool calling;
+- планирование дня и недели;
+- чтение и изменение Google Calendar;
+- работу с Google Tasks;
+- локальную память на SQLite;
+- проекты и next actions;
+- отдельную творческую базу знаний;
+- голосовой ввод и ответы;
+- погоду через Open-Meteo;
+- внешний HTTP gateway;
+- подтверждение чувствительных действий;
+- очереди и аудит исходящих сообщений.
+
+Модель анализирует запрос и выбирает разрешённый инструмент. Фактическое
+чтение или изменение данных выполняют отдельные Python-модули.
+
+## Архитектура
+
+```text
+Telegram
+   │
+   ▼
+ bot.py
+   │
+   ▼
+ai_agent.py ───────── OpenAI API
+   │
+   ├── Google Calendar
+   ├── Google Tasks
+   ├── SQLite Memory
+   ├── Projects / Next Actions
+   ├── Creative Knowledge
+   ├── Voice Tools
+   └── Clippy HTTP Gateway
+                 │
+                 └── External integrations
+```
+
+Основной Telegram-процесс и HTTP gateway запускаются независимо. Runtime state
+хранится в каталоге `data/` и не смешивается с исходным кодом.
+
+## Ключевые инженерные решения
+
+### Tool-based architecture
+
+LLM не получает прямой доступ к инфраструктуре. Календарь, задачи, память,
+проекты и другие операции представлены отдельными Python tools. Это отделяет
+reasoning модели от выполнения действий.
+
+### Разделение read и write операций
+
+Чтение и изменение состояния обрабатываются раздельно. Для чувствительных
+write-операций предусмотрены подготовка действия, валидация и подтверждение
+владельца до фактического выполнения.
+
+### Allowlist ресурсов
+
+Операции Google Calendar ограничены заранее разрешёнными календарями.
+Ассистент не должен самостоятельно обнаруживать и изменять произвольные
+ресурсы пользователя.
+
+### Контроль доступа
+
+Telegram-команды принимает только владелец с разрешённым ID. HTTP gateway
+использует Bearer API keys, ограничивает размер и частоту запросов и в рабочей
+конфигурации слушает только localhost.
+
+### Runtime state вне Git
+
+SQLite-базы, OAuth-токены, очереди сообщений, временные планы, загруженные
+документы и другой runtime state находятся в `data/` и исключены через
+`.gitignore`.
+
+## Основные модули
+
+| Модуль | Назначение |
+| --- | --- |
+| `bot.py` | Telegram-интерфейс, callback-команды и фоновые циклы |
+| `ai_agent.py` | OpenAI agent, схемы tools и маршрутизация вызовов |
+| `calendar_tools.py` | Google Calendar, allowlist и подготовка изменений |
+| `google_tasks_tools.py` | Чтение и изменение Google Tasks |
+| `memory_store.py` | Диалоговая память и сохранённые факты в SQLite |
+| `project_next_actions.py` | Проекты, следующие действия и синхронизация |
+| `creative_knowledge.py` | Проверяемая read-only база творческих проектов |
+| `chatgpt_archive.py` | Локальный поиск по импортированному архиву |
+| `voice_tools.py` | Распознавание и синтез речи |
+| `clippy_gateway.py` | Защищённый HTTP API для внешних интеграций |
+| `bot_tools.py` | Подготовка и подтверждение сообщений клиентского бота |
+| `clippy_task_classifier.py` | Детерминированная классификация задач по правилам |
+
+## Стек
+
+- Python 3.12+
+- aiogram 3
+- OpenAI API
+- Google Calendar API
+- Google Tasks API и OAuth
+- SQLite
+- aiohttp
+- Linux / systemd в production
+
+## Локальный запуск
+
+### 1. Подготовить окружение
+
+```bash
+git clone https://github.com/ArtToSlipAway/clippy-ai-assistant-demo.git
+cd clippy-assistant
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+cp .env.example .env
+```
+
+### 2. Настроить интеграции
+
+Заполните собственный `.env` и добавьте Google credentials локально. Нужны как
+минимум токен Telegram, owner ID, OpenAI API key, разрешённые calendar IDs и
+два независимых ключа gateway длиной не менее 32 символов.
+
+Настоящие значения нельзя добавлять в Git. Файл `.env.example` содержит только
+безопасные заглушки.
+
+Код намеренно не загружает `.env` автоматически. Перед локальным запуском можно
+экспортировать значения в текущую shell-сессию:
+
+```bash
+set -a
+source .env
+set +a
+```
+
+### 3. Запустить компоненты
+
+В первом терминале:
+
+```bash
+source .venv/bin/activate
+python bot.py
+```
+
+Для HTTP gateway во втором терминале с теми же переменными окружения:
+
+```bash
+source .venv/bin/activate
+python clippy_gateway.py
+```
+
+По умолчанию gateway доступен только на `127.0.0.1:8765`. Публиковать его
+напрямую в интернет нельзя.
+
+## Безопасность публичной версии
+
+- API keys и credentials отсутствуют в исходниках;
+- OAuth tokens и SQLite-базы исключены из Git;
+- Telegram owner проверяется по числовому ID;
+- gateway защищён отдельными API keys;
+- произвольный shell-доступ модели не предоставляется;
+- чувствительные операции отделены от обычного диалога;
+- calendar writes ограничены allowlist;
+- runtime-файлы и загруженные документы исключены через `.gitignore`;
+- production IP, абсолютные server paths и сообщения пользователей удалены.
+
+Перед каждой публикацией репозиторий следует повторно проверять на секреты.
+
+## Public vs Production
+
+Публичная версия показывает архитектуру и исходный код, но не является
+готовым общедоступным SaaS-сервисом или универсальным установщиком.
+
+Production дополнительно использует:
+
+- Linux и systemd;
+- отдельных Unix-пользователей для сервисов;
+- закрытые environment-файлы;
+- Google service account и OAuth credentials;
+- reverse proxy и HTTPS;
+- ограниченные filesystem permissions;
+- отдельные runtime databases;
+- резервное копирование и наблюдение за сервисами.
+
+## Ограничения
+
+- проект рассчитан на одного владельца Telegram;
+- для запуска нужны собственные аккаунты и credentials внешних сервисов;
+- часть возможностей зависит от структуры личных календарей и локальных данных;
+- публичный репозиторий не содержит production-конфигурацию и приватный prompt;
+- полноценный end-to-end тест требует тестовых Telegram, OpenAI и Google аккаунтов;
+- проект находится в активной разработке.
+
+## Роль автора
+
+Проект создавался как собственная рабочая система автоматизации. Владелец
+определял задачи и пользовательские сценарии, проверял работу интеграций,
+тестировал результат и контролировал production-внедрение.
+
+AI-инструменты использовались для помощи при написании, рефакторинге и ревью
+кода. Архитектурные решения, доступы, проверка поведения и окончательное принятие
+изменений оставались под контролем владельца проекта.
+
+## Статус
+
+Публичная версия предназначена для технического портфолио и изучения подхода к
+созданию персонального AI-ассистента с контролируемыми внешними действиями.

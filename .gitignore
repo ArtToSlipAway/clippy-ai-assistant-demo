@@ -1,0 +1,51 @@
+
+__pycache__/
+!.env.example
+!data/.gitkeep
+!data/uploads/
+!data/uploads/documents/
+.DS_Store
+.env
+.env.*
+.idea/
+.pytest_cache/
+.venv/
+.vscode/
+*.backup
+*.bak
+*.csv
+*.db
+*.dump
+*.key
+*.log
+*.p12
+*.pem
+*.pfx
+*.py[cod]
+*.sql
+*.sqlite
+*.sqlite3
+# --- Public demo safety ---
+# Databases / logs / queues
+# OS / editors
+# Python
+# Runtime state
+# Secrets
+backups/
+client_secret*.json
+credentials.json
+credentials*.json
+data/*
+data/*.env
+data/*credentials*
+data/*token*
+data/uploads/*
+data/uploads/documents/*
+google_tasks_credentials.json
+google_tasks_token.json
+logs/
+media/
+service_account*.json
+service-account*.json
+uploads/
+venv/
