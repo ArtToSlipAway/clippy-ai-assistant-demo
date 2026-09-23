@@ -49,3 +49,7 @@ service_account*.json
 service-account*.json
 uploads/
 venv/
+
+# Explicitly keep public demo templates
+!.env.example
+!data/.gitkeep

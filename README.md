@@ -127,7 +127,7 @@ SQLite-базы, OAuth-токены, очереди сообщений, врем
 
 ```bash
 git clone https://github.com/ArtToSlipAway/clippy-ai-assistant-demo.git
-cd clippy-assistant
+cd clippy-ai-assistant-demo
 python3.12 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
