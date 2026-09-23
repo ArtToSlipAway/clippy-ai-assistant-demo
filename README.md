@@ -1,5 +1,8 @@
 # Clippy Assistant
 
+[![CI](https://github.com/ArtToSlipAway/clippy-ai-assistant-demo/actions/workflows/ci.yml/badge.svg)](https://github.com/ArtToSlipAway/clippy-ai-assistant-demo/actions/workflows/ci.yml)
+
+
 > **Portfolio / sanitized version**
 >
 > This repository is a sanitized public snapshot of a private production project.
